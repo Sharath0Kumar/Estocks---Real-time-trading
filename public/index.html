@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estock | Professional Broker Dashboard</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+
+    <!-- App Shell -->
+    <div class="app-container">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">E</div>
+                <h2>Estock</h2>
+            </div>
+            <nav>
+                <a href="#" class="nav-item active" onclick="showSection('dashboard', this)">
+                    <span class="icon">📊</span> Dashboard
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('settings-view', this)">
+                    <span class="icon">⚙️</span> Settings
+                </a>
+            </nav>
+            <div class="user-profile-mini">
+                <div class="avatar">U</div>
+                <div class="user-info">
+                    <span class="name">Guest User</span>
+                    <span class="role">Trader</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Top Header -->
+            <header class="top-bar">
+                <div class="search-bar">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="Search markets, news, etc...">
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn">🔔</button>
+                    <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()">🌙</button>
+                </div>
+            </header>
+
+            <!-- Login View -->
+            <div id="login-container" class="view-container">
+                <div class="login-card glass-card">
+                    <h1>Welcome Back</h1>
+                    <p class="subtitle">Access your real-time trading dashboard</p>
+
+                    <div class="form-group">
+                        <label for="email-input">Email Address</label>
+                        <input type="email" id="email-input" placeholder="name@example.com" required>
+                    </div>
+
+                    <button onclick="login()" class="btn-primary full-width">
+                        Enter Dashboard
+                    </button>
+
+                    <p class="disclaimer">Use any email to simulate a login session.</p>
+                </div>
+            </div>
+
+            <!-- Dashboard View -->
+            <div id="dashboard" class="view-container" style="display:none;">
+                <div class="dashboard-header">
+                    <div class="welcome-text">
+                        <h1 id="welcome-message">Dashboard</h1>
+                        <p>Market Overview & Real-Time Portfolio</p>
+                    </div>
+                    <div class="market-status">
+                        <span class="status-dot live"></span> Market Open
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card glass-card">
+                        <h3>Portfolio Value</h3>
+                        <div class="value">$124,592.00</div>
+                        <div class="change positive">+1.2%</div>
+                    </div>
+                    <div class="stat-card glass-card">
+                        <h3>Day Gain</h3>
+                        <div class="value">$1,240.50</div>
+                        <div class="change positive">+0.8%</div>
+                    </div>
+                    <div class="stat-card glass-card">
+                        <h3>Buying Power</h3>
+                        <div class="value">$54,000.00</div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <!-- Subscription Module -->
+                    <div class="card glass-card subscription-section">
+                        <div class="card-header">
+                            <h3>Add to Watchlist</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="sub-controls">
+                                <input type="text" id="ticker-input" placeholder="Symbol (e.g. GOOG)" maxlength="5">
+                                <button onclick="subscribeStock()" class="btn-primary">
+                                    <span>+</span> Add Stock
+                                </button>
+                            </div>
+                            <div class="supported-tickers">
+                                <span>Supported:</span>
+                                <span class="badge">GOOG</span>
+                                <span class="badge">TSLA</span>
+                                <span class="badge">AMZN</span>
+                                <span class="badge">META</span>
+                                <span class="badge">NVDA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Market Table -->
+                    <div class="card glass-card table-section">
+                        <div class="card-header">
+                            <h3>Live Market Data</h3>
+                            <button class="icon-btn small">⋮</button>
+                        </div>
+                        <table id="stock-table" class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticker</th>
+                                    <th>Price</th>
+                                    <th>24h Change</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock-list">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settings-view" class="view-container" style="display:none;">
+                <div class="dashboard-header">
+                    <div class="welcome-text">
+                        <h1>Settings</h1>
+                        <p>Manage your account preferences</p>
+                    </div>
+                </div>
+
+                <div class="content-grid" style="grid-template-columns: 1fr; max-width: 600px;">
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <h3>Profile Details</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Display Name</label>
+                                <input type="text" id="profile-name" value="Guest User">
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" id="profile-email" value="guest@estock.com" disabled>
+                            </div>
+                            <button onclick="saveProfile()" class="btn-primary">Save Changes</button>
+                        </div>
+                    </div>
+
+                    <div class="card glass-card" style="border-color: rgba(239, 68, 68, 0.3);">
+                        <div class="card-header">
+                            <h3 style="color: var(--danger);">Danger Zone</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="color: var(--text-muted); margin-bottom: 16px;">Sign out of your account on this
+                                device.</p>
+                            <button onclick="logout()" class="btn-primary"
+                                style="background: var(--danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);">
+                                Log Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Background Decoration -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <script src="client.js"></script>
+</body>
+
+</html>
