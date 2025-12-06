@@ -570,3 +570,24 @@ body.light-mode .nav-item.active {
 .glass-card .card-body {
     padding-top: 16px;
 }
+
+/* Login Mode - Hides Navigation */
+body.login-mode .sidebar,
+body.login-mode .top-bar {
+    display: none !important;
+}
+
+body.login-mode .app-container {
+    padding: 0;
+}
+
+body.login-mode .main-content {
+    margin: 0;
+    width: 100%;
+    height: 100vh;
+}
+
+body.login-mode #login-container {
+    height: 100vh;
+    min-height: 100vh;
+}

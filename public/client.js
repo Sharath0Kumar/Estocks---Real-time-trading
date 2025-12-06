@@ -11,6 +11,65 @@ const stockListBody = document.getElementById('stock-list');
 // Stores the last known price for dynamic color-coding (up/down flash)
 const lastPrices = {};
 
+// --- Portfolio State Management ---
+const INITIAL_CAPITAL = 200000;
+const portfolioState = {
+    cash: INITIAL_CAPITAL,
+    holdings: {} // Format: { 'GOOG': { quantity: 1, currentPrice: 1500 } }
+};
+
+/**
+ * Updates the dashboard stats based on current portfolio state.
+ */
+function updateDashboardStats() {
+    let totalPortfolioValue = 0;
+    let totalDayStartValue = 0;
+
+    // Calculate value of holdings
+    for (const [ticker, data] of Object.entries(portfolioState.holdings)) {
+        const value = data.quantity * data.currentPrice;
+        totalPortfolioValue += value;
+
+        // Calculate what the value was at the start of the day
+        // Formula: current / (1 + change/100)
+        const dayStartPrice = data.currentPrice / (1 + (data.change / 100));
+        totalDayStartValue += data.quantity * dayStartPrice;
+    }
+
+    const currentDayGain = totalPortfolioValue - totalDayStartValue;
+    const currentDayGainPercent = totalDayStartValue > 0 ? (currentDayGain / totalDayStartValue) * 100 : 0;
+    const buyingPower = portfolioState.cash - totalPortfolioValue;
+
+    // Update UI
+    const portValueEl = document.getElementById('portfolio-value');
+    if (portValueEl) portValueEl.textContent = `$${totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const buyingPowerEl = document.getElementById('buying-power');
+    if (buyingPowerEl) buyingPowerEl.textContent = `$${buyingPower.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const dayGainEl = document.getElementById('day-gain');
+    const dayGainPercentEl = document.getElementById('day-gain-percent');
+
+    if (dayGainEl && dayGainPercentEl) {
+        dayGainEl.textContent = `$${currentDayGain.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        dayGainPercentEl.textContent = `${currentDayGainPercent >= 0 ? '+' : ''}${currentDayGainPercent.toFixed(2)}%`;
+
+        // Color coding
+        dayGainEl.className = `value ${currentDayGain >= 0 ? 'text-success' : 'text-danger'}`;
+        dayGainPercentEl.className = `change ${currentDayGain >= 0 ? 'positive' : 'negative'}`;
+
+        // Add dynamic colors to styles if not present
+        if (currentDayGain >= 0) {
+            dayGainPercentEl.style.color = 'var(--success)';
+            dayGainEl.style.color = 'var(--success)';
+        } else {
+            dayGainPercentEl.style.color = 'var(--danger)';
+            dayGainEl.style.color = 'var(--danger)';
+        }
+    }
+}
+
+
 // --- User Actions ---
 
 /**
@@ -26,6 +85,9 @@ function login() {
         welcomeMessage.textContent = `Welcome, ${email}!`;
         loginContainer.style.display = 'none';
         dashboard.style.display = 'block';
+
+        // Remove login-mode class to show nav
+        document.body.classList.remove('login-mode');
     } else {
         alert('Please enter a valid email address.');
     }
@@ -70,6 +132,16 @@ socket.on('stock_update', (data) => {
     const ticker = data.ticker;
     const newPrice = parseFloat(data.price);
     const percentageChange = parseFloat(data.change);
+
+    // Update Portfolio State
+    if (!portfolioState.holdings[ticker]) {
+        portfolioState.holdings[ticker] = { quantity: 1, currentPrice: newPrice, change: percentageChange };
+    } else {
+        portfolioState.holdings[ticker].currentPrice = newPrice;
+        portfolioState.holdings[ticker].change = percentageChange;
+    }
+
+    updateDashboardStats(); // Recalculate totals
 
     const priceCell = document.getElementById(`price-${ticker}`);
     const changeCell = document.getElementById(`change-${ticker}`);
@@ -202,7 +274,11 @@ function logout() {
     // 3. Navigate to Login
     document.querySelectorAll('.view-container').forEach(el => el.style.display = 'none');
     document.getElementById('login-container').style.display = 'flex'; // Flex for centering
+
+    // Add login-mode class to hide nav
+    document.body.classList.add('login-mode');
 }
+
 
 /**
  * Mock Profile Save
@@ -210,4 +286,9 @@ function logout() {
 function saveProfile() {
     const name = document.getElementById('profile-name').value;
     alert(`Profile updated for ${name}!`);
+}
+
+// Check login status on load
+if (document.getElementById('login-container').style.display !== 'none') {
+    document.body.classList.add('login-mode');
 }
