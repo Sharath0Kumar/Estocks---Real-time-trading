@@ -234,6 +234,24 @@ function logout() {
 
 // --- UI Utilities ---
 
+function unsubscribeStock(ticker) {
+    if (confirm(`Are you sure you want to remove ${ticker} from your watchlist?`)) {
+        // 1. Remove from local state
+        userSubscriptions = userSubscriptions.filter(t => t !== ticker);
+
+        // 2. Update Persistence
+        localStorage.setItem(`subscriptions_${currentUserEmail}`, JSON.stringify(userSubscriptions));
+
+        // 3. Remove DOM element
+        const row = document.getElementById(`row-${ticker}`);
+        if (row) row.remove();
+
+        // 4. Update Stats (simulate selling/removing holding)
+        delete portfolioState.holdings[ticker];
+        updateDashboardStats();
+    }
+}
+
 function addStockRow(ticker) {
     if (document.getElementById(`row-${ticker}`)) return;
 
@@ -255,6 +273,15 @@ function addStockRow(ticker) {
     changeCell.id = `change-${ticker}`;
     changeCell.classList.add('price-cell');
     changeCell.textContent = '0.00%';
+
+    // Action (Unsubscribe)
+    const actionCell = row.insertCell(3);
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '×'; // or 'Remove'
+    removeBtn.className = 'btn-danger-small';
+    removeBtn.title = 'Remove Stock';
+    removeBtn.onclick = () => unsubscribeStock(ticker);
+    actionCell.appendChild(removeBtn);
 }
 
 /**
