@@ -373,3 +373,33 @@ function saveProfile() {
     const name = document.getElementById('profile-name').value;
     alert(`Profile updated for ${name}!`);
 }
+
+
+// --- Responsive JS ---
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.classList.toggle('active');
+}
+
+// Close sidebar when clicking outside (optional enhancement)
+document.addEventListener('click', (e) => {
+    const sidebar = document.querySelector('.sidebar');
+    const toggle = document.querySelector('.mobile-toggle');
+
+    // If sidebar is open, click is OUTSIDE sidebar, and NOT on the toggle button
+    if (sidebar.classList.contains('active') &&
+        !sidebar.contains(e.target) &&
+        !toggle.contains(e.target)) {
+        sidebar.classList.remove('active');
+    }
+});
+
+// Close sidebar on nav item click (Mobile)
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+            document.querySelector('.sidebar').classList.remove('active');
+        }
+    });
+});
+

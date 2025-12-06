@@ -113,7 +113,10 @@ h6 {
     display: flex;
     flex-direction: column;
     padding: 24px;
-    z-index: 10;
+    z-index: 1000;
+    /* Elevated Z-Index for mobile overlay */
+    transition: transform 0.3s ease-in-out;
+    /* Smooth slide */
 }
 
 .brand {
@@ -211,6 +214,16 @@ h6 {
     justify-content: space-between;
     padding: 0 32px;
     border-bottom: 1px solid var(--glass-border);
+}
+
+.mobile-toggle {
+    display: none;
+    /* Hidden by default on desktop */
+    cursor: pointer;
+    font-size: 24px;
+    padding: 8px;
+    margin-right: 16px;
+    color: var(--text-muted);
 }
 
 .search-bar {
@@ -613,4 +626,88 @@ body.login-mode #login-container {
 .btn-danger-small:hover {
     background: var(--danger);
     color: white;
+}
+
+/* --- Media Queries --- */
+
+/* Tablet & Smaller Desktop */
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+        /* Stack Sidebar & Table */
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .app-container {
+        /* Don't change flex-direction for overlay sidebar, but ensure contexts match */
+        position: relative;
+    }
+
+    /* Sidebar Overlay Mode */
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        /* Hidden by default */
+        top: 0;
+        bottom: 0;
+        height: 100vh;
+        width: 280px;
+        box-shadow: 10px 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar.active {
+        left: 0;
+    }
+
+    /* Show Toggle */
+    .mobile-toggle {
+        display: block;
+    }
+
+    /* Header Adjustments */
+    .top-bar {
+        padding: 0 16px;
+    }
+
+    /* Layout Adjustments */
+    .view-container {
+        padding: 16px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        /* Single column stats */
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .search-bar {
+        display: none;
+        /* Optional: Hide search on small screens or make it a button */
+    }
+
+    /* Table Scrolling */
+    .table-section {
+        overflow-x: auto;
+    }
+
+    /* Login Card */
+    .login-card {
+        width: 90%;
+        padding: 24px !important;
+    }
+
+    .login-card h1 {
+        font-size: 24px;
+    }
 }
