@@ -3,16 +3,17 @@
 // 1. Dependencies
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 
 // 2. Server Setup
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server); 
+const io = new Server(server);
 const PORT = 3000;
 
 // Serve the static files (index.html, client.js, style.css) from the 'public' folder
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Core Data Structures ---
 
@@ -50,9 +51,9 @@ const socketToUserMap = {};
  */
 function getRandomPriceChange(currentPrice) {
     // Random change between -1 and 1
-    const change = (Math.random() - 0.5) * 2; 
+    const change = (Math.random() - 0.5) * 2;
     // New price, ensuring it doesn't drop below 1
-    const newPrice = Math.max(1, currentPrice + change); 
+    const newPrice = Math.max(1, currentPrice + change);
     return newPrice;
 }
 
@@ -65,10 +66,10 @@ io.on('connection', (socket) => {
     // 0) Allows a user to login using his/her email
     socket.on('login', (userEmail) => {
         const email = userEmail.toLowerCase().trim();
-        
+
         // Simulate successful login and session tracking
         socketToUserMap[socket.id] = email;
-        
+
         // Ensure the user has an entry in the subscription list
         if (!userSubscriptions[email]) {
             userSubscriptions[email] = [];
@@ -83,15 +84,15 @@ io.on('connection', (socket) => {
     // 1) Subscribe to a Supported Stock
     socket.on('subscribe_stock', (ticker) => {
         const email = socketToUserMap[socket.id];
-        if (!email) return; 
-        
+        if (!email) return;
+
         const validTicker = ticker.toUpperCase();
-        
+
         if (SUPPORTED_STOCKS.includes(validTicker)) {
             // Add to the user's subscriptions if not already present
             if (!userSubscriptions[email].includes(validTicker)) {
                 userSubscriptions[email].push(validTicker);
-                
+
                 // Confirm subscription to the specific client
                 socket.emit('subscription_success', validTicker);
                 console.log(`${email} subscribed to ${validTicker}`);
@@ -101,7 +102,7 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         const email = socketToUserMap[socket.id];
-        delete socketToUserMap[socket.id]; 
+        delete socketToUserMap[socket.id];
         console.log(`User disconnected: ${email || socket.id}`);
     });
 });
@@ -116,12 +117,12 @@ setInterval(() => {
     SUPPORTED_STOCKS.forEach(ticker => {
         // 1. Simulate new price
         const basePrice = BASE_PRICES[ticker];
-        const newPrice = getRandomPriceChange(currentPrices[ticker]); 
+        const newPrice = getRandomPriceChange(currentPrices[ticker]);
         currentPrices[ticker] = newPrice; // Update the persistent current price
-        
+
         // 2. Calculate Percentage Change
         const percentageChange = ((newPrice - basePrice) / basePrice) * 100;
-        
+
         // 3. Prepare the update data payload
         const updatePayload = {
             ticker: ticker,
@@ -132,7 +133,7 @@ setInterval(() => {
         // 4. Iterate over all connected users and send the update only if they are subscribed
         Object.entries(socketToUserMap).forEach(([socketId, email]) => {
             const subscriptions = userSubscriptions[email] || [];
-            
+
             // This is the core logic for asynchronous, user-specific updates:
             // io.to(socketId).emit sends the message only to that specific client socket.
             if (subscriptions.includes(ticker)) {
